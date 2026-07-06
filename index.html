@@ -12,10 +12,11 @@
   <style>
     :root { --bg:#f6f8fb; --card:#fff; --text:#172033; --muted:#637084; --line:#d9e1ee; --primary:#2563eb; --primary-dark:#1d4ed8; }
     * { box-sizing:border-box; }
-    body { margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--text); background:var(--bg); }
-    .layout { display:grid; grid-template-columns:360px 1fr; min-height:100vh; }
-    aside { background:var(--card); border-right:1px solid var(--line); padding:24px; overflow:auto; }
-    main { position:relative; min-height:100vh; }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; }
+    body { font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--text); background:var(--bg); }
+    .layout { display:grid; grid-template-columns:360px minmax(0,1fr); width:100vw; height:100vh; }
+    aside { background:var(--card); border-right:1px solid var(--line); padding:24px; overflow:auto; height:100vh; }
+    main { position:relative; width:100%; height:100vh; min-width:0; overflow:hidden; }
     h1 { margin:0 0 10px; font-size:26px; letter-spacing:-.04em; }
     p { color:var(--muted); line-height:1.55; margin:0 0 16px; }
     .card { border:1px solid var(--line); border-radius:14px; background:#fff; padding:16px; margin:16px 0; box-shadow:0 4px 16px rgba(15,23,42,.04); }
@@ -30,7 +31,7 @@
     .stat { border:1px solid var(--line); border-radius:12px; padding:12px; background:#f8fafc; }
     .stat strong { display:block; font-size:22px; }
     .stat span { color:var(--muted); font-size:12px; }
-    #map { position:absolute; inset:0; }
+    #map { position:absolute; inset:0; width:100%; height:100%; background:#dbeafe; }
     .list { max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:12px; }
     .item { padding:12px; border-bottom:1px solid var(--line); cursor:pointer; background:#fff; }
     .item:last-child { border-bottom:none; }
@@ -43,7 +44,7 @@
     .badge { display:inline-block; border-radius:999px; background:#eff6ff; color:#1d4ed8; padding:4px 9px; font-size:12px; font-weight:700; }
     .notice { font-size:13px; color:#64748b; }
     .privacy { font-size:13px; color:#475569; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; padding:12px; }
-    @media (max-width: 860px) { .layout { grid-template-columns:1fr; } aside { max-height:52vh; border-right:0; border-bottom:1px solid var(--line); } main { min-height:48vh; } #map { min-height:48vh; } }
+    @media (max-width: 860px) { html, body { overflow:auto; } .layout { grid-template-columns:1fr; height:100vh; } aside { height:52vh; border-right:0; border-bottom:1px solid var(--line); } main { height:48vh; min-height:48vh; } #map { height:48vh; min-height:48vh; } }
   </style>
 </head>
 <body>
@@ -156,6 +157,18 @@
     searchInput.addEventListener('input', applyFilters);
     industryFilter.addEventListener('change', applyFilters);
     render(companyData);
+
+    function refreshMapSize() {
+      map.invalidateSize(true);
+      if (currentRows.length) {
+        const bounds = currentRows.map(r => [r.lat, r.lng]);
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+      }
+    }
+    setTimeout(refreshMapSize, 100);
+    setTimeout(refreshMapSize, 500);
+    window.addEventListener('load', refreshMapSize);
+    window.addEventListener('resize', refreshMapSize);
   </script>
 </body>
 </html>
