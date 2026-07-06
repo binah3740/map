@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>엑셀 업체 위치 지도</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQpPaPGFGaDl4tqBtHcckoxpLLwFQFQ=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #657084;
+      --line: #d9dee8;
+      --primary: #2563eb;
+      --danger: #b42318;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      min-height: 100vh;
+    }
+
+    aside {
+      background: var(--card);
+      border-right: 1px solid var(--line);
+      padding: 18px;
+      overflow-y: auto;
+    }
+
+    main { min-width: 0; }
+    #map { height: 100vh; width: 100%; }
+
+    h1 {
+      font-size: 21px;
+      margin: 0 0 8px;
+      line-height: 1.25;
+    }
+
+    .desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 10px 0 6px;
+    }
+
+    input[type="file"], input[type="text"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 10px;
+      font: inherit;
+      background: #fff;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      padding: 10px 12px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button.secondary {
+      background: #eef2ff;
+      color: #1d4ed8;
+      border: 1px solid #c7d2fe;
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .stat {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 20px;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin-top: 8px;
+    }
+
+    .error {
+      color: var(--danger);
+      font-weight: 700;
+      font-size: 13px;
+      margin-top: 8px;
+      white-space: pre-line;
+    }
+
+    .company-list {
+      max-height: 240px;
+      overflow: auto;
+      border-top: 1px solid var(--line);
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+
+    .company-item {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 8px;
+      margin-bottom: 7px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .company-item:hover { background: #f8fafc; }
+    .company-item strong { display: block; font-size: 13px; }
+    .company-item span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .popup-title {
+      font-weight: 900;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .popup-row {
+      margin: 3px 0;
+      line-height: 1.4;
+    }
+
+    .popup-row b {
+      display: inline-block;
+      min-width: 44px;
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      #map { height: 70vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <h1>엑셀 업체 위치 지도</h1>
+      <p class="desc">
+        엑셀 파일을 업로드하면 위도·경도 기준으로 지도에 업체 위치를 표시합니다.
+        지도 핀에 마우스를 올리거나 클릭하면 회사명, 주소, 업종만 표시됩니다.
+      </p>
+
+      <div class="box">
+        <label for="fileInput">엑셀 파일 업로드</label>
+        <input id="fileInput" type="file" accept=".xlsx,.xls,.xlsm,.csv" />
+        <p class="hint">개인정보 보호를 위해 담당자·연락처는 표시하지 않습니다.</p>
+        <div id="loadError" class="error"></div>
+      </div>
+
+      <div class="box">
+        <label for="sheetSelect">시트 선택</label>
+        <select id="sheetSelect" disabled></select>
+
+        <label for="companyCol">회사명 컬럼</label>
+        <select id="companyCol" disabled></select>
+
+        <label for="industryCol">업종 컬럼</label>
+        <select id="industryCol" disabled></select>
+
+        <label for="addressCol">주소 컬럼</label>
+        <select id="addressCol" disabled></select>
+
+        <label for="latCol">위도 컬럼</label>
+        <select id="latCol" disabled></select>
+
+        <label for="lngCol">경도 컬럼</label>
+        <select id="lngCol" disabled></select>
+
+        <button id="renderBtn" disabled>지도에 표시</button>
+        <button id="downloadBtn" class="secondary" disabled>표시 데이터 CSV 다운로드</button>
+      </div>
+
+      <div class="box">
+        <label for="searchInput">검색</label>
+        <input id="searchInput" type="text" placeholder="회사명, 주소, 업종 검색" disabled />
+        <div class="stats">
+          <div class="stat"><b id="totalCount">0</b><span>전체 유효 위치</span></div>
+          <div class="stat"><b id="visibleCount">0</b><span>현재 표시</span></div>
+        </div>
+        <div id="companyList" class="company-list"></div>
+      </div>
+    </aside>
+
+    <main>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      workbook: null,
+      rows: [],
+      records: [],
+      filtered: [],
+      markerGroup: null,
+      markerByIndex: new Map()
+    };
+
+    const els = {
+      fileInput: document.getElementById('fileInput'),
+      sheetSelect: document.getElementById('sheetSelect'),
+      companyCol: document.getElementById('companyCol'),
+      industryCol: document.getElementById('industryCol'),
+      addressCol: document.getElementById('addressCol'),
+      latCol: document.getElementById('latCol'),
+      lngCol: document.getElementById('lngCol'),
+      renderBtn: document.getElementById('renderBtn'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      searchInput: document.getElementById('searchInput'),
+      totalCount: document.getElementById('totalCount'),
+      visibleCount: document.getElementById('visibleCount'),
+      companyList: document.getElementById('companyList'),
+      loadError: document.getElementById('loadError')
+    };
+
+    const map = L.map('map', { preferCanvas: true }).setView([36.35, 127.8], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    state.markerGroup = L.markerClusterGroup();
+    map.addLayer(state.markerGroup);
+
+    const defaultColMap = {
+      companyCol: 0,   // A열 회사명
+      industryCol: 1,  // B열 업종
+      addressCol: 5,   // F열 주소
+      latCol: 6,       // G열 위도
+      lngCol: 7        // H열 경도
+    };
+
+    const aliases = {
+      companyCol: ['회사명', '기업명', '업체명', '상호', '사업장명'],
+      industryCol: ['업종', '업태', '업종명', '산업분류'],
+      addressCol: ['주소', '사업장 주소', '소재지', '사업장소재지'],
+      latCol: ['위도', 'lat', 'latitude', 'y'],
+      lngCol: ['경도', 'lng', 'lon', 'longitude', 'x']
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function columnName(index) {
+      let name = '';
+      let n = index + 1;
+      while (n > 0) {
+        const rem = (n - 1) % 26;
+        name = String.fromCharCode(65 + rem) + name;
+        n = Math.floor((n - 1) / 26);
+      }
+      return name;
+    }
+
+    function normalizeNumber(value) {
+      if (value === null || value === undefined || value === '') return NaN;
+      if (typeof value === 'number') return value;
+      const cleaned = String(value).trim().replaceAll(',', '');
+      return Number(cleaned);
+    }
+
+    function detectHeaderRow(rows) {
+      const maxScan = Math.min(rows.length, 20);
+      for (let i = 0; i < maxScan; i++) {
+        const joined = (rows[i] || []).map(v => String(v ?? '').toLowerCase()).join('|');
+        if (joined.includes('위도') || joined.includes('경도') || joined.includes('회사') || joined.includes('주소')) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    function buildColumnOptions(rows) {
+      const maxCols = Math.max(...rows.map(r => r.length), 8);
+      const headerRowIndex = detectHeaderRow(rows);
+      const header = headerRowIndex >= 0 ? rows[headerRowIndex] : [];
+      const selects = [els.companyCol, els.industryCol, els.addressCol, els.latCol, els.lngCol];
+
+      for (const select of selects) {
+        select.innerHTML = '';
+        for (let i = 0; i < maxCols; i++) {
+          const label = header[i] ? `${columnName(i)} - ${header[i]}` : `${columnName(i)}열`;
+          const option = document.createElement('option');
+          option.value = String(i);
+          option.textContent = label;
+          select.appendChild(option);
+        }
+        select.disabled = false;
+      }
+
+      for (const [selectKey, defaultIndex] of Object.entries(defaultColMap)) {
+        const select = els[selectKey];
+        let detected = -1;
+        if (headerRowIndex >= 0) {
+          const targetAliases = aliases[selectKey] || [];
+          detected = header.findIndex(h => targetAliases.some(alias => String(h ?? '').toLowerCase().includes(alias.toLowerCase())));
+        }
+        select.value = String(detected >= 0 ? detected : Math.min(defaultIndex, maxCols - 1));
+      }
+    }
+
+    function readCurrentSheet() {
+      const sheetName = els.sheetSelect.value;
+      const worksheet = state.workbook.Sheets[sheetName];
+      state.rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+      buildColumnOptions(state.rows);
+    }
+
+    function extractRecords() {
+      const companyIdx = Number(els.companyCol.value);
+      const industryIdx = Number(els.industryCol.value);
+      const addressIdx = Number(els.addressCol.value);
+      const latIdx = Number(els.latCol.value);
+      const lngIdx = Number(els.lngCol.value);
+      const headerRowIndex = detectHeaderRow(state.rows);
+      const startRow = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
+
+      const records = [];
+      for (let i = startRow; i < state.rows.length; i++) {
+        const row = state.rows[i] || [];
+        const lat = normalizeNumber(row[latIdx]);
+        const lng = normalizeNumber(row[lngIdx]);
+        const company = String(row[companyIdx] ?? '').trim();
+        const industry = String(row[industryIdx] ?? '').trim();
+        const address = String(row[addressIdx] ?? '').trim();
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+        if (lat < 32 || lat > 39 || lng < 124 || lng > 132) continue;
+        if (!company && !address && !industry) continue;
+
+        records.push({
+          index: records.length,
+          company: company || '(회사명 없음)',
+          industry: industry || '-',
+          address: address || '-',
+          lat,
+          lng
+        });
+      }
+      return records;
+    }
+
+    function popupHtml(r) {
+      return `
+        <div class="popup-title">${escapeHtml(r.company)}</div>
+        <div class="popup-row"><b>주소</b> ${escapeHtml(r.address)}</div>
+        <div class="popup-row"><b>업종</b> ${escapeHtml(r.industry)}</div>
+      `;
+    }
+
+    function drawMarkers(records) {
+      state.markerGroup.clearLayers();
+      state.markerByIndex.clear();
+
+      const bounds = [];
+      for (const r of records) {
+        const marker = L.marker([r.lat, r.lng]);
+        marker.bindTooltip(popupHtml(r), { sticky: true, direction: 'top', opacity: 0.95 });
+        marker.bindPopup(popupHtml(r));
+        state.markerGroup.addLayer(marker);
+        state.markerByIndex.set(r.index, marker);
+        bounds.push([r.lat, r.lng]);
+      }
+
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 13 });
+      }
+    }
+
+    function renderList(records) {
+      els.companyList.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+      records.slice(0, 200).forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'company-item';
+        div.innerHTML = `<strong>${escapeHtml(r.company)}</strong><span>${escapeHtml(r.address)}</span><span>${escapeHtml(r.industry)}</span>`;
+        div.addEventListener('click', () => {
+          const marker = state.markerByIndex.get(r.index);
+          map.setView([r.lat, r.lng], 15);
+          if (marker) marker.openPopup();
+        });
+        fragment.appendChild(div);
+      });
+      if (records.length > 200) {
+        const more = document.createElement('p');
+        more.className = 'hint';
+        more.textContent = `목록은 200개까지만 표시됩니다. 현재 ${records.length.toLocaleString()}개가 지도에 표시되었습니다.`;
+        fragment.appendChild(more);
+      }
+      els.companyList.appendChild(fragment);
+    }
+
+    function applySearch() {
+      const q = els.searchInput.value.trim().toLowerCase();
+      state.filtered = q
+        ? state.records.filter(r => [r.company, r.address, r.industry].some(v => String(v).toLowerCase().includes(q)))
+        : [...state.records];
+
+      drawMarkers(state.filtered);
+      renderList(state.filtered);
+      els.visibleCount.textContent = state.filtered.length.toLocaleString();
+      els.downloadBtn.disabled = state.filtered.length === 0;
+    }
+
+    function toCsv(records) {
+      const header = ['회사명', '주소', '업종', '위도', '경도'];
+      const lines = [header];
+      for (const r of records) {
+        lines.push([r.company, r.address, r.industry, r.lat, r.lng]);
+      }
+      return lines.map(row => row.map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
+    }
+
+    els.fileInput.addEventListener('change', async (event) => {
+      els.loadError.textContent = '';
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const buffer = await file.arrayBuffer();
+        state.workbook = XLSX.read(buffer, { type: 'array' });
+        els.sheetSelect.innerHTML = '';
+        state.workbook.SheetNames.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          els.sheetSelect.appendChild(option);
+        });
+        els.sheetSelect.disabled = false;
+        els.renderBtn.disabled = false;
+        els.searchInput.disabled = false;
+        readCurrentSheet();
+      } catch (err) {
+        els.loadError.textContent = '엑셀 파일을 읽지 못했습니다. 파일 형식 또는 손상 여부를 확인하세요.';
+        console.error(err);
+      }
+    });
+
+    els.sheetSelect.addEventListener('change', readCurrentSheet);
+
+    els.renderBtn.addEventListener('click', () => {
+      state.records = extractRecords();
+      state.filtered = [...state.records];
+      els.totalCount.textContent = state.records.length.toLocaleString();
+      els.visibleCount.textContent = state.filtered.length.toLocaleString();
+      els.searchInput.value = '';
+      drawMarkers(state.filtered);
+      renderList(state.filtered);
+      els.downloadBtn.disabled = state.filtered.length === 0;
+
+      if (state.records.length === 0) {
+        els.loadError.textContent = '유효한 위도/경도 데이터가 없습니다. 컬럼 선택이 맞는지 확인하세요.';
+      } else {
+        els.loadError.textContent = '';
+      }
+    });
+
+    els.searchInput.addEventListener('input', applySearch);
+
+    els.downloadBtn.addEventListener('click', () => {
+      const csv = '\ufeff' + toCsv(state.filtered);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'company_map_visible_data.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
