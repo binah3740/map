@@ -4,539 +4,158 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>엑셀 업체 위치 지도</title>
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQpPaPGFGaDl4tqBtHcckoxpLLwFQFQ=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQpPaPGFGoD1t0Bt2T4QbQcWWpTv0Ck=" crossorigin="" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
   <style>
-    :root {
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --text: #172033;
-      --muted: #657084;
-      --line: #d9dee8;
-      --primary: #2563eb;
-      --danger: #b42318;
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background: var(--bg);
-    }
-
-    .app {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      min-height: 100vh;
-    }
-
-    aside {
-      background: var(--card);
-      border-right: 1px solid var(--line);
-      padding: 18px;
-      overflow-y: auto;
-    }
-
-    main { min-width: 0; }
-    #map { height: 100vh; width: 100%; }
-
-    h1 {
-      font-size: 21px;
-      margin: 0 0 8px;
-      line-height: 1.25;
-    }
-
-    .desc {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
-      margin-bottom: 18px;
-    }
-
-    .box {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 14px;
-      background: #fff;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 700;
-      margin: 10px 0 6px;
-    }
-
-    input[type="file"], input[type="text"], select {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 9px 10px;
-      font: inherit;
-      background: #fff;
-    }
-
-    button {
-      width: 100%;
-      border: 0;
-      border-radius: 8px;
-      background: var(--primary);
-      color: white;
-      font-weight: 800;
-      padding: 10px 12px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    button.secondary {
-      background: #eef2ff;
-      color: #1d4ed8;
-      border: 1px solid #c7d2fe;
-    }
-
-    button:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .stat {
-      background: #f8fafc;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
-    }
-
-    .stat b {
-      display: block;
-      font-size: 20px;
-    }
-
-    .stat span {
-      display: block;
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 2px;
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-      margin-top: 8px;
-    }
-
-    .error {
-      color: var(--danger);
-      font-weight: 700;
-      font-size: 13px;
-      margin-top: 8px;
-      white-space: pre-line;
-    }
-
-    .company-list {
-      max-height: 240px;
-      overflow: auto;
-      border-top: 1px solid var(--line);
-      margin-top: 10px;
-      padding-top: 8px;
-    }
-
-    .company-item {
-      border: 1px solid var(--line);
-      border-radius: 9px;
-      padding: 8px;
-      margin-bottom: 7px;
-      cursor: pointer;
-      background: #fff;
-    }
-
-    .company-item:hover { background: #f8fafc; }
-    .company-item strong { display: block; font-size: 13px; }
-    .company-item span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
-
-    .popup-title {
-      font-weight: 900;
-      font-size: 15px;
-      margin-bottom: 6px;
-    }
-
-    .popup-row {
-      margin: 3px 0;
-      line-height: 1.4;
-    }
-
-    .popup-row b {
-      display: inline-block;
-      min-width: 44px;
-    }
-
-    @media (max-width: 900px) {
-      .app { grid-template-columns: 1fr; }
-      aside { border-right: 0; border-bottom: 1px solid var(--line); }
-      #map { height: 70vh; }
-    }
+    :root { --bg:#f6f8fb; --card:#fff; --text:#172033; --muted:#637084; --line:#d9e1ee; --primary:#2563eb; --primary-dark:#1d4ed8; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--text); background:var(--bg); }
+    .layout { display:grid; grid-template-columns:360px 1fr; min-height:100vh; }
+    aside { background:var(--card); border-right:1px solid var(--line); padding:24px; overflow:auto; }
+    main { position:relative; min-height:100vh; }
+    h1 { margin:0 0 10px; font-size:26px; letter-spacing:-.04em; }
+    p { color:var(--muted); line-height:1.55; margin:0 0 16px; }
+    .card { border:1px solid var(--line); border-radius:14px; background:#fff; padding:16px; margin:16px 0; box-shadow:0 4px 16px rgba(15,23,42,.04); }
+    label { display:block; font-weight:700; font-size:14px; margin-bottom:8px; }
+    input, select, button { width:100%; border:1px solid var(--line); border-radius:10px; padding:12px 13px; font-size:15px; background:#fff; }
+    input:focus, select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+    button { cursor:pointer; background:var(--primary); color:#fff; border-color:var(--primary); font-weight:700; }
+    button:hover { background:var(--primary-dark); }
+    .btn-secondary { display:block; width:100%; text-align:center; text-decoration:none; color:var(--primary); background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:11px 12px; font-weight:700; margin-top:10px; }
+    .btn-secondary:hover { background:#dbeafe; }
+    .stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .stat { border:1px solid var(--line); border-radius:12px; padding:12px; background:#f8fafc; }
+    .stat strong { display:block; font-size:22px; }
+    .stat span { color:var(--muted); font-size:12px; }
+    #map { position:absolute; inset:0; }
+    .list { max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:12px; }
+    .item { padding:12px; border-bottom:1px solid var(--line); cursor:pointer; background:#fff; }
+    .item:last-child { border-bottom:none; }
+    .item:hover { background:#f1f5f9; }
+    .item .name { font-weight:800; }
+    .item .meta { color:var(--muted); font-size:13px; margin-top:4px; line-height:1.4; }
+    .popup-title { font-size:16px; font-weight:800; margin-bottom:7px; }
+    .popup-line { margin:4px 0; }
+    .popup-label { color:#64748b; font-weight:700; margin-right:4px; }
+    .badge { display:inline-block; border-radius:999px; background:#eff6ff; color:#1d4ed8; padding:4px 9px; font-size:12px; font-weight:700; }
+    .notice { font-size:13px; color:#64748b; }
+    .privacy { font-size:13px; color:#475569; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; padding:12px; }
+    @media (max-width: 860px) { .layout { grid-template-columns:1fr; } aside { max-height:52vh; border-right:0; border-bottom:1px solid var(--line); } main { min-height:48vh; } #map { min-height:48vh; } }
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="layout">
     <aside>
       <h1>엑셀 업체 위치 지도</h1>
-      <p class="desc">
-        엑셀 파일을 업로드하면 위도·경도 기준으로 지도에 업체 위치를 표시합니다.
-        지도 핀에 마우스를 올리거나 클릭하면 회사명, 주소, 업종만 표시됩니다.
-      </p>
-
-      <div class="box">
-        <label for="fileInput">엑셀 파일 업로드</label>
-        <input id="fileInput" type="file" accept=".xlsx,.xls,.xlsm,.csv" />
-        <p class="hint">개인정보 보호를 위해 담당자·연락처는 표시하지 않습니다.</p>
-        <div id="loadError" class="error"></div>
-      </div>
-
-      <div class="box">
-        <label for="sheetSelect">시트 선택</label>
-        <select id="sheetSelect" disabled></select>
-
-        <label for="companyCol">회사명 컬럼</label>
-        <select id="companyCol" disabled></select>
-
-        <label for="industryCol">업종 컬럼</label>
-        <select id="industryCol" disabled></select>
-
-        <label for="addressCol">주소 컬럼</label>
-        <select id="addressCol" disabled></select>
-
-        <label for="latCol">위도 컬럼</label>
-        <select id="latCol" disabled></select>
-
-        <label for="lngCol">경도 컬럼</label>
-        <select id="lngCol" disabled></select>
-
-        <button id="renderBtn" disabled>지도에 표시</button>
-        <button id="downloadBtn" class="secondary" disabled>표시 데이터 CSV 다운로드</button>
-      </div>
-
-      <div class="box">
-        <label for="searchInput">검색</label>
-        <input id="searchInput" type="text" placeholder="회사명, 주소, 업종 검색" disabled />
+      <p>엑셀 내용을 HTML 안에 내장한 버전입니다. 파일 업로드 없이 바로 지도에 업체 위치가 표시됩니다.</p>
+      <div class="card">
+        <label for="search">검색</label>
+        <input id="search" type="search" placeholder="회사명, 주소, 업종 검색" />
         <div class="stats">
-          <div class="stat"><b id="totalCount">0</b><span>전체 유효 위치</span></div>
-          <div class="stat"><b id="visibleCount">0</b><span>현재 표시</span></div>
+          <div class="stat"><strong id="totalCount">0</strong><span>전체 업체</span></div>
+          <div class="stat"><strong id="visibleCount">0</strong><span>표시 업체</span></div>
         </div>
-        <div id="companyList" class="company-list"></div>
       </div>
+      <div class="card">
+        <label for="industryFilter">업종 필터</label>
+        <select id="industryFilter"><option value="">전체 업종</option></select>
+        <a class="btn-secondary" href="출장거리-2_2026년 동반위_kakao_map.html">출장거리 지도 열기</a>
+      </div>
+      <div class="card">
+        <label>업체 목록</label>
+        <div id="list" class="list"></div>
+      </div>
+      <div class="privacy">담당자명과 연락처는 개인정보 보호를 위해 HTML 데이터와 지도 표시 항목에서 제외했습니다. 표시 항목은 회사명, 주소, 업종, 위도·경도입니다.</div>
     </aside>
-
-    <main>
-      <div id="map"></div>
-    </main>
+    <main><div id="map"></div></main>
   </div>
-
   <script>
-    const state = {
-      workbook: null,
-      rows: [],
-      records: [],
-      filtered: [],
-      markerGroup: null,
-      markerByIndex: new Map()
-    };
-
-    const els = {
-      fileInput: document.getElementById('fileInput'),
-      sheetSelect: document.getElementById('sheetSelect'),
-      companyCol: document.getElementById('companyCol'),
-      industryCol: document.getElementById('industryCol'),
-      addressCol: document.getElementById('addressCol'),
-      latCol: document.getElementById('latCol'),
-      lngCol: document.getElementById('lngCol'),
-      renderBtn: document.getElementById('renderBtn'),
-      downloadBtn: document.getElementById('downloadBtn'),
-      searchInput: document.getElementById('searchInput'),
-      totalCount: document.getElementById('totalCount'),
-      visibleCount: document.getElementById('visibleCount'),
-      companyList: document.getElementById('companyList'),
-      loadError: document.getElementById('loadError')
-    };
-
-    const map = L.map('map', { preferCanvas: true }).setView([36.35, 127.8], 7);
+    const companyData = [{"company": "태양기계", "industry": "샤시", "address": "전북특별자치도 전주시 덕진구 비석날로 54 (여의동, 태양기계(주)) 태양기계", "lat": 35.8563155349117, "lng": 127.079825660572}, {"company": "새한산업", "industry": "차체", "address": "경기도 평택시 포승읍 포승공단로118번길 103 (포승읍) 새한산업", "lat": 36.9722304166271, "lng": 126.853867622002}, {"company": "(주)동보", "industry": "구동", "address": "인천광역시 남동구 비류대로 646 (남촌동) (주)동보", "lat": 37.4217933203731, "lng": 126.705882058714}, {"company": "아성프라텍", "industry": "의장", "address": "경기도 화성시 만세구 우정읍 한말길 38-6 (우정읍) 아성프라텍", "lat": 37.0689539435795, "lng": 126.80031165458}, {"company": "무등기업 평동공장", "industry": "의장", "address": "광주광역시 광산구 평동산단로 297 (옥동) 무등기업평동", "lat": 35.1331152050763, "lng": 126.766768704673}, {"company": "한국엔에스케이", "industry": "구동", "address": "경상남도 창원시 성산구 공단로474번길 53 (성산동, 한국NSK(주)) 한국엔에스케이", "lat": 35.1983113097968, "lng": 128.668624543595}, {"company": "한국엔에스케이", "industry": "구동", "address": "충청남도 천안시 동남구 수신면 5산단7로 11 (수신면) 한국엔에스케이천안공장", "lat": 36.7390705445657, "lng": 127.263749333917}, {"company": "평화산업(주)", "industry": "샤시", "address": "대구광역시 달성군 논공읍 논공로 597 (논공읍) 평화산업(주)", "lat": 35.7381998683146, "lng": 128.46018272235}, {"company": "대동하이렉스", "industry": "차체", "address": "인천광역시 남동구 남동동로78번길 43 (고잔동, 대동하이렉스(주))", "lat": 37.3920088535587, "lng": 126.697809354902}, {"company": "부국산업(주)", "industry": "샤시", "address": "울산광역시 울주군 상북면 길천산업2길 24-19 (상북면) .", "lat": 35.597494223169, "lng": 129.077636679274}, {"company": "우신공업", "industry": "샤시", "address": "충청남도 당진시 면천면 아미로 94 (면천면, 우신공업(주)) 우신공업", "lat": 36.8275979211348, "lng": 126.656032057936}, {"company": "삼기산업", "industry": "샤시", "address": "울산광역시 남구 테크노산업로29번길 175 (두왕동) 삼기산업", "lat": 35.5028112429573, "lng": 129.302707014783}, {"company": "한화미", "industry": "의장", "address": "경상남도 의령군 의령읍 구룡로4남길 15 (의령읍) 한화미 의령공장", "lat": 35.3162228783531, "lng": 128.273456553314}, {"company": "피에이치에이", "industry": "차체", "address": "대구광역시 달서구 성서4차첨단로 392 (대천동) 피에이치에이", "lat": 35.8179174273569, "lng": 128.506782251639}, {"company": "KBI동국실업 신아산공장", "industry": "의장", "address": "충청남도 아산시 선장면 서부남로 100 (선장면, 동국실업) .", "lat": 36.7882373336964, "lng": 126.872981478784}, {"company": "한서실업", "industry": "의장", "address": "대구광역시 서구 염색공단천로7길 34 (비산동)", "lat": 35.8880820273663, "lng": 128.550609951646}, {"company": "금문산업", "industry": "의장", "address": "부산광역시 강서구 녹산산업중로 224 (송정동) 금문산업(주)", "lat": 35.0928659470228, "lng": 128.844318165992}, {"company": "코비코(주)", "industry": "차체", "address": "광주광역시 광산구 평동산단1번로 118 (장록동) 코비코(주)", "lat": 35.1364696482382, "lng": 126.769421515519}, {"company": "한국유미코아촉매", "industry": "구동", "address": "울산광역시 울주군 온산읍 공단로 341 (온산읍) 한국유미코아촉매 온산공장", "lat": 35.4328294830397, "lng": 129.33711047028}, {"company": "광진정기", "industry": "구동", "address": "경상남도 김해시 분성로541번길 46-21 (어방동) 광진정기", "lat": 35.2397030762785, "lng": 128.904938184529}, {"company": "지엠비코리아(주)", "industry": "구동", "address": "충청남도 서산시 성연면 명천산업로 69 (성연면) 지엠비코리아(주)", "lat": 36.8334563476674, "lng": 126.488280276352}, {"company": "오피모빌리티씨파워코리아", "industry": "샤시", "address": "경상북도 경주시 강동면 천강로 534-48 (강동면) 오피모빌리티씨파워코리아", "lat": 35.9324146750292, "lng": 129.292325493832}, {"company": "모팜", "industry": "차체", "address": "울산광역시 북구 모듈화산업로 31 (효문동) (주)모팜", "lat": 35.5657437536148, "lng": 129.378126738686}, {"company": "동진이공(주)", "industry": "의장", "address": "경상북도 경주시 안강읍 갑산공단길 23 (안강읍, 동진이공(주)) 동진이공(주)", "lat": 35.9721440111871, "lng": 129.225855433155}, {"company": "진영산업", "industry": "구동", "address": "울산광역시 남구 처용로487번길 18-39 (성암동, 진영산업(주) 울산공장) \n진영산업 울산공장", "lat": 35.4803953041265, "lng": 129.350656576344}, {"company": "자여", "industry": "전동화", "address": "경기도 화성시 만세구 마도면 청원산단7길 20 (마도면) 주식회사 자여", "lat": 37.1707943853412, "lng": 126.765763063696}, {"company": "(주) 대승", "industry": "샤시", "address": "전북특별자치도 김제시 서흥공단2길 89 (흥사동) (주) 대승", "lat": 35.8238165058703, "lng": 126.902410173083}, {"company": "(주)태흥테크", "industry": "차체", "address": "부산광역시 기장군 장안읍 장안산단9로 172 (장안읍)", "lat": 35.3252370891221, "lng": 129.258129935173}];
+    const map = L.map('map', { zoomControl: true }).setView([36.5, 127.8], 7);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    state.markerGroup = L.markerClusterGroup();
-    map.addLayer(state.markerGroup);
+    const cluster = L.markerClusterGroup();
+    let markerMap = new Map();
+    let currentRows = [...companyData];
 
-    const defaultColMap = {
-      companyCol: 0,   // A열 회사명
-      industryCol: 1,  // B열 업종
-      addressCol: 5,   // F열 주소
-      latCol: 6,       // G열 위도
-      lngCol: 7        // H열 경도
-    };
+    const searchInput = document.getElementById('search');
+    const industryFilter = document.getElementById('industryFilter');
+    const listEl = document.getElementById('list');
+    const totalCountEl = document.getElementById('totalCount');
+    const visibleCountEl = document.getElementById('visibleCount');
 
-    const aliases = {
-      companyCol: ['회사명', '기업명', '업체명', '상호', '사업장명'],
-      industryCol: ['업종', '업태', '업종명', '산업분류'],
-      addressCol: ['주소', '사업장 주소', '소재지', '사업장소재지'],
-      latCol: ['위도', 'lat', 'latitude', 'y'],
-      lngCol: ['경도', 'lng', 'lon', 'longitude', 'x']
-    };
+    totalCountEl.textContent = companyData.length.toLocaleString('ko-KR');
 
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
     }
 
-    function columnName(index) {
-      let name = '';
-      let n = index + 1;
-      while (n > 0) {
-        const rem = (n - 1) % 26;
-        name = String.fromCharCode(65 + rem) + name;
-        n = Math.floor((n - 1) / 26);
-      }
-      return name;
+    function popupHtml(row) {
+      return `<div class="popup-title">${esc(row.company)}</div>
+        <div class="popup-line"><span class="popup-label">업종</span><span class="badge">${esc(row.industry || '-')}</span></div>
+        <div class="popup-line"><span class="popup-label">주소</span>${esc(row.address || '-')}</div>`;
     }
 
-    function normalizeNumber(value) {
-      if (value === null || value === undefined || value === '') return NaN;
-      if (typeof value === 'number') return value;
-      const cleaned = String(value).trim().replaceAll(',', '');
-      return Number(cleaned);
-    }
-
-    function detectHeaderRow(rows) {
-      const maxScan = Math.min(rows.length, 20);
-      for (let i = 0; i < maxScan; i++) {
-        const joined = (rows[i] || []).map(v => String(v ?? '').toLowerCase()).join('|');
-        if (joined.includes('위도') || joined.includes('경도') || joined.includes('회사') || joined.includes('주소')) {
-          return i;
-        }
-      }
-      return -1;
-    }
-
-    function buildColumnOptions(rows) {
-      const maxCols = Math.max(...rows.map(r => r.length), 8);
-      const headerRowIndex = detectHeaderRow(rows);
-      const header = headerRowIndex >= 0 ? rows[headerRowIndex] : [];
-      const selects = [els.companyCol, els.industryCol, els.addressCol, els.latCol, els.lngCol];
-
-      for (const select of selects) {
-        select.innerHTML = '';
-        for (let i = 0; i < maxCols; i++) {
-          const label = header[i] ? `${columnName(i)} - ${header[i]}` : `${columnName(i)}열`;
-          const option = document.createElement('option');
-          option.value = String(i);
-          option.textContent = label;
-          select.appendChild(option);
-        }
-        select.disabled = false;
-      }
-
-      for (const [selectKey, defaultIndex] of Object.entries(defaultColMap)) {
-        const select = els[selectKey];
-        let detected = -1;
-        if (headerRowIndex >= 0) {
-          const targetAliases = aliases[selectKey] || [];
-          detected = header.findIndex(h => targetAliases.some(alias => String(h ?? '').toLowerCase().includes(alias.toLowerCase())));
-        }
-        select.value = String(detected >= 0 ? detected : Math.min(defaultIndex, maxCols - 1));
-      }
-    }
-
-    function readCurrentSheet() {
-      const sheetName = els.sheetSelect.value;
-      const worksheet = state.workbook.Sheets[sheetName];
-      state.rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-      buildColumnOptions(state.rows);
-    }
-
-    function extractRecords() {
-      const companyIdx = Number(els.companyCol.value);
-      const industryIdx = Number(els.industryCol.value);
-      const addressIdx = Number(els.addressCol.value);
-      const latIdx = Number(els.latCol.value);
-      const lngIdx = Number(els.lngCol.value);
-      const headerRowIndex = detectHeaderRow(state.rows);
-      const startRow = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
-
-      const records = [];
-      for (let i = startRow; i < state.rows.length; i++) {
-        const row = state.rows[i] || [];
-        const lat = normalizeNumber(row[latIdx]);
-        const lng = normalizeNumber(row[lngIdx]);
-        const company = String(row[companyIdx] ?? '').trim();
-        const industry = String(row[industryIdx] ?? '').trim();
-        const address = String(row[addressIdx] ?? '').trim();
-
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-        if (lat < 32 || lat > 39 || lng < 124 || lng > 132) continue;
-        if (!company && !address && !industry) continue;
-
-        records.push({
-          index: records.length,
-          company: company || '(회사명 없음)',
-          industry: industry || '-',
-          address: address || '-',
-          lat,
-          lng
-        });
-      }
-      return records;
-    }
-
-    function popupHtml(r) {
-      return `
-        <div class="popup-title">${escapeHtml(r.company)}</div>
-        <div class="popup-row"><b>주소</b> ${escapeHtml(r.address)}</div>
-        <div class="popup-row"><b>업종</b> ${escapeHtml(r.industry)}</div>
-      `;
-    }
-
-    function drawMarkers(records) {
-      state.markerGroup.clearLayers();
-      state.markerByIndex.clear();
-
-      const bounds = [];
-      for (const r of records) {
-        const marker = L.marker([r.lat, r.lng]);
-        marker.bindTooltip(popupHtml(r), { sticky: true, direction: 'top', opacity: 0.95 });
-        marker.bindPopup(popupHtml(r));
-        state.markerGroup.addLayer(marker);
-        state.markerByIndex.set(r.index, marker);
-        bounds.push([r.lat, r.lng]);
-      }
-
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 13 });
-      }
-    }
-
-    function renderList(records) {
-      els.companyList.innerHTML = '';
-      const fragment = document.createDocumentFragment();
-      records.slice(0, 200).forEach(r => {
-        const div = document.createElement('div');
-        div.className = 'company-item';
-        div.innerHTML = `<strong>${escapeHtml(r.company)}</strong><span>${escapeHtml(r.address)}</span><span>${escapeHtml(r.industry)}</span>`;
-        div.addEventListener('click', () => {
-          const marker = state.markerByIndex.get(r.index);
-          map.setView([r.lat, r.lng], 15);
-          if (marker) marker.openPopup();
-        });
-        fragment.appendChild(div);
+    function buildIndustryFilter() {
+      const industries = [...new Set(companyData.map(r => r.industry).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'ko'));
+      industries.forEach(ind => {
+        const opt = document.createElement('option');
+        opt.value = ind;
+        opt.textContent = ind;
+        industryFilter.appendChild(opt);
       });
-      if (records.length > 200) {
-        const more = document.createElement('p');
-        more.className = 'hint';
-        more.textContent = `목록은 200개까지만 표시됩니다. 현재 ${records.length.toLocaleString()}개가 지도에 표시되었습니다.`;
-        fragment.appendChild(more);
-      }
-      els.companyList.appendChild(fragment);
     }
 
-    function applySearch() {
-      const q = els.searchInput.value.trim().toLowerCase();
-      state.filtered = q
-        ? state.records.filter(r => [r.company, r.address, r.industry].some(v => String(v).toLowerCase().includes(q)))
-        : [...state.records];
+    function render(rows) {
+      cluster.clearLayers();
+      markerMap.clear();
+      listEl.innerHTML = '';
+      const bounds = [];
+      rows.forEach((row, idx) => {
+        const marker = L.marker([row.lat, row.lng]);
+        marker.bindPopup(popupHtml(row));
+        marker.bindTooltip(`<strong>${esc(row.company)}</strong><br>${esc(row.industry || '')}<br>${esc(row.address || '')}`, { sticky: true, direction: 'top', opacity: 0.95 });
+        marker.on('click', () => marker.openPopup());
+        cluster.addLayer(marker);
+        markerMap.set(row.company + '|' + idx, marker);
+        bounds.push([row.lat, row.lng]);
 
-      drawMarkers(state.filtered);
-      renderList(state.filtered);
-      els.visibleCount.textContent = state.filtered.length.toLocaleString();
-      els.downloadBtn.disabled = state.filtered.length === 0;
-    }
-
-    function toCsv(records) {
-      const header = ['회사명', '주소', '업종', '위도', '경도'];
-      const lines = [header];
-      for (const r of records) {
-        lines.push([r.company, r.address, r.industry, r.lat, r.lng]);
-      }
-      return lines.map(row => row.map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
-    }
-
-    els.fileInput.addEventListener('change', async (event) => {
-      els.loadError.textContent = '';
-      const file = event.target.files[0];
-      if (!file) return;
-
-      try {
-        const buffer = await file.arrayBuffer();
-        state.workbook = XLSX.read(buffer, { type: 'array' });
-        els.sheetSelect.innerHTML = '';
-        state.workbook.SheetNames.forEach(name => {
-          const option = document.createElement('option');
-          option.value = name;
-          option.textContent = name;
-          els.sheetSelect.appendChild(option);
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = `<div class="name">${esc(row.company)}</div><div class="meta">${esc(row.industry || '-')}<br>${esc(row.address || '-')}</div>`;
+        item.addEventListener('click', () => {
+          map.setView([row.lat, row.lng], 14);
+          marker.openPopup();
         });
-        els.sheetSelect.disabled = false;
-        els.renderBtn.disabled = false;
-        els.searchInput.disabled = false;
-        readCurrentSheet();
-      } catch (err) {
-        els.loadError.textContent = '엑셀 파일을 읽지 못했습니다. 파일 형식 또는 손상 여부를 확인하세요.';
-        console.error(err);
-      }
-    });
+        listEl.appendChild(item);
+      });
+      map.addLayer(cluster);
+      visibleCountEl.textContent = rows.length.toLocaleString('ko-KR');
+      if (bounds.length) { map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 }); }
+    }
 
-    els.sheetSelect.addEventListener('change', readCurrentSheet);
+    function applyFilters() {
+      const q = searchInput.value.trim().toLowerCase();
+      const ind = industryFilter.value;
+      currentRows = companyData.filter(row => {
+        const matchIndustry = !ind || row.industry === ind;
+        const text = `${row.company} ${row.industry} ${row.address}`.toLowerCase();
+        const matchSearch = !q || text.includes(q);
+        return matchIndustry && matchSearch;
+      });
+      render(currentRows);
+    }
 
-    els.renderBtn.addEventListener('click', () => {
-      state.records = extractRecords();
-      state.filtered = [...state.records];
-      els.totalCount.textContent = state.records.length.toLocaleString();
-      els.visibleCount.textContent = state.filtered.length.toLocaleString();
-      els.searchInput.value = '';
-      drawMarkers(state.filtered);
-      renderList(state.filtered);
-      els.downloadBtn.disabled = state.filtered.length === 0;
-
-      if (state.records.length === 0) {
-        els.loadError.textContent = '유효한 위도/경도 데이터가 없습니다. 컬럼 선택이 맞는지 확인하세요.';
-      } else {
-        els.loadError.textContent = '';
-      }
-    });
-
-    els.searchInput.addEventListener('input', applySearch);
-
-    els.downloadBtn.addEventListener('click', () => {
-      const csv = '\ufeff' + toCsv(state.filtered);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'company_map_visible_data.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
+    buildIndustryFilter();
+    searchInput.addEventListener('input', applyFilters);
+    industryFilter.addEventListener('change', applyFilters);
+    render(companyData);
   </script>
 </body>
 </html>
-<!-- redeploy -->
