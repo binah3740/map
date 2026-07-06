@@ -4,47 +4,39 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>엑셀 업체 위치 지도</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQpPaPGFGoD1t0Bt2T4QbQcWWpTv0Ck=" crossorigin="" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.6.1/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@v10.6.1/dist/ol.js"></script>
   <style>
     :root { --bg:#f6f8fb; --card:#fff; --text:#172033; --muted:#637084; --line:#d9e1ee; --primary:#2563eb; --primary-dark:#1d4ed8; }
-    * { box-sizing:border-box; }
-    html, body { margin:0; width:100%; height:100%; overflow:hidden; }
-    body { font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--text); background:var(--bg); }
-    .layout { display:grid; grid-template-columns:360px minmax(0,1fr); width:100vw; height:100vh; }
-    aside { background:var(--card); border-right:1px solid var(--line); padding:24px; overflow:auto; height:100vh; }
-    main { position:relative; width:100%; height:100vh; min-width:0; overflow:hidden; }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--text); background:var(--bg); }
+    .layout { display:grid; grid-template-columns:360px 1fr; width:100vw; height:100vh; }
+    aside { background:var(--card); border-right:1px solid var(--line); padding:24px; overflow:auto; height:100vh; z-index:2; }
+    main { position:relative; height:100vh; min-width:0; overflow:hidden; }
+    #map { position:absolute; inset:0; width:100%; height:100%; background:#e5eef8; }
     h1 { margin:0 0 10px; font-size:26px; letter-spacing:-.04em; }
     p { color:var(--muted); line-height:1.55; margin:0 0 16px; }
     .card { border:1px solid var(--line); border-radius:14px; background:#fff; padding:16px; margin:16px 0; box-shadow:0 4px 16px rgba(15,23,42,.04); }
     label { display:block; font-weight:700; font-size:14px; margin-bottom:8px; }
-    input, select, button { width:100%; border:1px solid var(--line); border-radius:10px; padding:12px 13px; font-size:15px; background:#fff; }
+    input, select { width:100%; border:1px solid var(--line); border-radius:10px; padding:12px 13px; font-size:15px; background:#fff; box-sizing:border-box; }
     input:focus, select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
-    button { cursor:pointer; background:var(--primary); color:#fff; border-color:var(--primary); font-weight:700; }
-    button:hover { background:var(--primary-dark); }
-    .btn-secondary { display:block; width:100%; text-align:center; text-decoration:none; color:var(--primary); background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:11px 12px; font-weight:700; margin-top:10px; }
+    .btn-secondary { display:block; width:100%; text-align:center; text-decoration:none; color:var(--primary); background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:11px 12px; font-weight:700; margin-top:10px; box-sizing:border-box; }
     .btn-secondary:hover { background:#dbeafe; }
     .stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
     .stat { border:1px solid var(--line); border-radius:12px; padding:12px; background:#f8fafc; }
     .stat strong { display:block; font-size:22px; }
     .stat span { color:var(--muted); font-size:12px; }
-    #map { position:absolute; inset:0; width:100%; height:100%; background:#dbeafe; }
     .list { max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:12px; }
     .item { padding:12px; border-bottom:1px solid var(--line); cursor:pointer; background:#fff; }
     .item:last-child { border-bottom:none; }
     .item:hover { background:#f1f5f9; }
     .item .name { font-weight:800; }
     .item .meta { color:var(--muted); font-size:13px; margin-top:4px; line-height:1.4; }
-    .popup-title { font-size:16px; font-weight:800; margin-bottom:7px; }
-    .popup-line { margin:4px 0; }
-    .popup-label { color:#64748b; font-weight:700; margin-right:4px; }
-    .badge { display:inline-block; border-radius:999px; background:#eff6ff; color:#1d4ed8; padding:4px 9px; font-size:12px; font-weight:700; }
-    .notice { font-size:13px; color:#64748b; }
     .privacy { font-size:13px; color:#475569; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; padding:12px; }
-    @media (max-width: 860px) { html, body { overflow:auto; } .layout { grid-template-columns:1fr; height:100vh; } aside { height:52vh; border-right:0; border-bottom:1px solid var(--line); } main { height:48vh; min-height:48vh; } #map { height:48vh; min-height:48vh; } }
+    #popup { position:absolute; min-width:240px; max-width:340px; background:#fff; border:1px solid #cbd5e1; border-radius:12px; padding:12px; box-shadow:0 12px 30px rgba(15,23,42,.18); display:none; pointer-events:none; z-index:10; }
+    #popup .title { font-weight:800; font-size:16px; margin-bottom:7px; }
+    #popup .line { font-size:13px; line-height:1.45; margin:3px 0; color:#334155; }
+    #popup .label { color:#64748b; font-weight:700; margin-right:4px; }
+    @media (max-width:860px) { html, body { overflow:auto; } .layout { display:block; height:auto; } aside { height:auto; border-right:0; border-bottom:1px solid var(--line); } main { height:60vh; } #map { height:60vh; } }
   </style>
 </head>
 <body>
@@ -69,106 +61,121 @@
         <label>업체 목록</label>
         <div id="list" class="list"></div>
       </div>
-      <div class="privacy">담당자명과 연락처는 개인정보 보호를 위해 HTML 데이터와 지도 표시 항목에서 제외했습니다. 표시 항목은 회사명, 주소, 업종, 위도·경도입니다.</div>
+      <div class="privacy">담당자와 연락처는 개인정보 보호를 위해 HTML 데이터와 표시 항목에서 제외했습니다. 표시 항목은 회사명, 주소, 업종, 위도·경도입니다.</div>
     </aside>
-    <main><div id="map"></div></main>
+    <main><div id="map"></div><div id="popup"></div></main>
   </div>
   <script>
     const companyData = [{"company": "태양기계", "industry": "샤시", "address": "전북특별자치도 전주시 덕진구 비석날로 54 (여의동, 태양기계(주)) 태양기계", "lat": 35.8563155349117, "lng": 127.079825660572}, {"company": "새한산업", "industry": "차체", "address": "경기도 평택시 포승읍 포승공단로118번길 103 (포승읍) 새한산업", "lat": 36.9722304166271, "lng": 126.853867622002}, {"company": "(주)동보", "industry": "구동", "address": "인천광역시 남동구 비류대로 646 (남촌동) (주)동보", "lat": 37.4217933203731, "lng": 126.705882058714}, {"company": "아성프라텍", "industry": "의장", "address": "경기도 화성시 만세구 우정읍 한말길 38-6 (우정읍) 아성프라텍", "lat": 37.0689539435795, "lng": 126.80031165458}, {"company": "무등기업 평동공장", "industry": "의장", "address": "광주광역시 광산구 평동산단로 297 (옥동) 무등기업평동", "lat": 35.1331152050763, "lng": 126.766768704673}, {"company": "한국엔에스케이", "industry": "구동", "address": "경상남도 창원시 성산구 공단로474번길 53 (성산동, 한국NSK(주)) 한국엔에스케이", "lat": 35.1983113097968, "lng": 128.668624543595}, {"company": "한국엔에스케이", "industry": "구동", "address": "충청남도 천안시 동남구 수신면 5산단7로 11 (수신면) 한국엔에스케이천안공장", "lat": 36.7390705445657, "lng": 127.263749333917}, {"company": "평화산업(주)", "industry": "샤시", "address": "대구광역시 달성군 논공읍 논공로 597 (논공읍) 평화산업(주)", "lat": 35.7381998683146, "lng": 128.46018272235}, {"company": "대동하이렉스", "industry": "차체", "address": "인천광역시 남동구 남동동로78번길 43 (고잔동, 대동하이렉스(주))", "lat": 37.3920088535587, "lng": 126.697809354902}, {"company": "부국산업(주)", "industry": "샤시", "address": "울산광역시 울주군 상북면 길천산업2길 24-19 (상북면) .", "lat": 35.597494223169, "lng": 129.077636679274}, {"company": "우신공업", "industry": "샤시", "address": "충청남도 당진시 면천면 아미로 94 (면천면, 우신공업(주)) 우신공업", "lat": 36.8275979211348, "lng": 126.656032057936}, {"company": "삼기산업", "industry": "샤시", "address": "울산광역시 남구 테크노산업로29번길 175 (두왕동) 삼기산업", "lat": 35.5028112429573, "lng": 129.302707014783}, {"company": "한화미", "industry": "의장", "address": "경상남도 의령군 의령읍 구룡로4남길 15 (의령읍) 한화미 의령공장", "lat": 35.3162228783531, "lng": 128.273456553314}, {"company": "피에이치에이", "industry": "차체", "address": "대구광역시 달서구 성서4차첨단로 392 (대천동) 피에이치에이", "lat": 35.8179174273569, "lng": 128.506782251639}, {"company": "KBI동국실업 신아산공장", "industry": "의장", "address": "충청남도 아산시 선장면 서부남로 100 (선장면, 동국실업) .", "lat": 36.7882373336964, "lng": 126.872981478784}, {"company": "한서실업", "industry": "의장", "address": "대구광역시 서구 염색공단천로7길 34 (비산동)", "lat": 35.8880820273663, "lng": 128.550609951646}, {"company": "금문산업", "industry": "의장", "address": "부산광역시 강서구 녹산산업중로 224 (송정동) 금문산업(주)", "lat": 35.0928659470228, "lng": 128.844318165992}, {"company": "코비코(주)", "industry": "차체", "address": "광주광역시 광산구 평동산단1번로 118 (장록동) 코비코(주)", "lat": 35.1364696482382, "lng": 126.769421515519}, {"company": "한국유미코아촉매", "industry": "구동", "address": "울산광역시 울주군 온산읍 공단로 341 (온산읍) 한국유미코아촉매 온산공장", "lat": 35.4328294830397, "lng": 129.33711047028}, {"company": "광진정기", "industry": "구동", "address": "경상남도 김해시 분성로541번길 46-21 (어방동) 광진정기", "lat": 35.2397030762785, "lng": 128.904938184529}, {"company": "지엠비코리아(주)", "industry": "구동", "address": "충청남도 서산시 성연면 명천산업로 69 (성연면) 지엠비코리아(주)", "lat": 36.8334563476674, "lng": 126.488280276352}, {"company": "오피모빌리티씨파워코리아", "industry": "샤시", "address": "경상북도 경주시 강동면 천강로 534-48 (강동면) 오피모빌리티씨파워코리아", "lat": 35.9324146750292, "lng": 129.292325493832}, {"company": "모팜", "industry": "차체", "address": "울산광역시 북구 모듈화산업로 31 (효문동) (주)모팜", "lat": 35.5657437536148, "lng": 129.378126738686}, {"company": "동진이공(주)", "industry": "의장", "address": "경상북도 경주시 안강읍 갑산공단길 23 (안강읍, 동진이공(주)) 동진이공(주)", "lat": 35.9721440111871, "lng": 129.225855433155}, {"company": "진영산업", "industry": "구동", "address": "울산광역시 남구 처용로487번길 18-39 (성암동, 진영산업(주) 울산공장) \n진영산업 울산공장", "lat": 35.4803953041265, "lng": 129.350656576344}, {"company": "자여", "industry": "전동화", "address": "경기도 화성시 만세구 마도면 청원산단7길 20 (마도면) 주식회사 자여", "lat": 37.1707943853412, "lng": 126.765763063696}, {"company": "(주) 대승", "industry": "샤시", "address": "전북특별자치도 김제시 서흥공단2길 89 (흥사동) (주) 대승", "lat": 35.8238165058703, "lng": 126.902410173083}, {"company": "(주)태흥테크", "industry": "차체", "address": "부산광역시 기장군 장안읍 장안산단9로 172 (장안읍)", "lat": 35.3252370891221, "lng": 129.258129935173}];
-    const map = L.map('map', { zoomControl: true }).setView([36.5, 127.8], 7);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    const cluster = L.markerClusterGroup();
-    let markerMap = new Map();
-    let currentRows = [...companyData];
-
     const searchInput = document.getElementById('search');
     const industryFilter = document.getElementById('industryFilter');
     const listEl = document.getElementById('list');
     const totalCountEl = document.getElementById('totalCount');
     const visibleCountEl = document.getElementById('visibleCount');
-
+    const popup = document.getElementById('popup');
     totalCountEl.textContent = companyData.length.toLocaleString('ko-KR');
 
-    function esc(v) {
-      return String(v ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    function esc(v) { return String(v ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+    function toFeature(row, idx) {
+      const f = new ol.Feature({ geometry: new ol.geom.Point(ol.proj.fromLonLat([row.lng, row.lat])), ...row, idx });
+      return f;
     }
 
-    function popupHtml(row) {
-      return `<div class="popup-title">${esc(row.company)}</div>
-        <div class="popup-line"><span class="popup-label">업종</span><span class="badge">${esc(row.industry || '-')}</span></div>
-        <div class="popup-line"><span class="popup-label">주소</span>${esc(row.address || '-')}</div>`;
-    }
+    const source = new ol.source.Vector();
+    const pinStyle = new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 8,
+        fill: new ol.style.Fill({ color: '#2563eb' }),
+        stroke: new ol.style.Stroke({ color: '#ffffff', width: 3 })
+      })
+    });
+    const hoverStyle = new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 10,
+        fill: new ol.style.Fill({ color: '#dc2626' }),
+        stroke: new ol.style.Stroke({ color: '#ffffff', width: 3 })
+      })
+    });
+    const vectorLayer = new ol.layer.Vector({ source, style: pinStyle });
+    const map = new ol.Map({
+      target: 'map',
+      layers: [
+        new ol.layer.Tile({ source: new ol.source.OSM({ crossOrigin: 'anonymous' }) }),
+        vectorLayer
+      ],
+      view: new ol.View({ center: ol.proj.fromLonLat([127.8, 36.5]), zoom: 7 })
+    });
 
     function buildIndustryFilter() {
       const industries = [...new Set(companyData.map(r => r.industry).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'ko'));
       industries.forEach(ind => {
-        const opt = document.createElement('option');
-        opt.value = ind;
-        opt.textContent = ind;
-        industryFilter.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = ind; opt.textContent = ind; industryFilter.appendChild(opt);
       });
+    }
+
+    let currentRows = companyData.slice();
+    let hoveredFeature = null;
+
+    function fitRows(rows) {
+      if (!rows.length) return;
+      const extent = ol.extent.createEmpty();
+      rows.forEach(r => ol.extent.extend(extent, ol.proj.transformExtent([r.lng, r.lat, r.lng, r.lat], 'EPSG:4326', 'EPSG:3857')));
+      map.getView().fit(extent, { padding:[50,50,50,50], maxZoom:12, duration:250 });
     }
 
     function render(rows) {
-      cluster.clearLayers();
-      markerMap.clear();
-      listEl.innerHTML = '';
-      const bounds = [];
+      source.clear(); listEl.innerHTML = ''; visibleCountEl.textContent = rows.length.toLocaleString('ko-KR');
+      const features = rows.map(toFeature); source.addFeatures(features);
       rows.forEach((row, idx) => {
-        const marker = L.marker([row.lat, row.lng]);
-        marker.bindPopup(popupHtml(row));
-        marker.bindTooltip(`<strong>${esc(row.company)}</strong><br>${esc(row.industry || '')}<br>${esc(row.address || '')}`, { sticky: true, direction: 'top', opacity: 0.95 });
-        marker.on('click', () => marker.openPopup());
-        cluster.addLayer(marker);
-        markerMap.set(row.company + '|' + idx, marker);
-        bounds.push([row.lat, row.lng]);
-
-        const item = document.createElement('div');
-        item.className = 'item';
+        const item = document.createElement('div'); item.className='item';
         item.innerHTML = `<div class="name">${esc(row.company)}</div><div class="meta">${esc(row.industry || '-')}<br>${esc(row.address || '-')}</div>`;
         item.addEventListener('click', () => {
-          map.setView([row.lat, row.lng], 14);
-          marker.openPopup();
+          const coord = ol.proj.fromLonLat([row.lng, row.lat]);
+          map.getView().animate({ center: coord, zoom: 14, duration: 250 });
+          showPopup(row, map.getPixelFromCoordinate(coord));
         });
         listEl.appendChild(item);
       });
-      map.addLayer(cluster);
-      visibleCountEl.textContent = rows.length.toLocaleString('ko-KR');
-      if (bounds.length) { map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 }); }
+      setTimeout(() => { map.updateSize(); fitRows(rows); }, 50);
     }
 
     function applyFilters() {
-      const q = searchInput.value.trim().toLowerCase();
-      const ind = industryFilter.value;
+      const q = searchInput.value.trim().toLowerCase(); const ind = industryFilter.value;
       currentRows = companyData.filter(row => {
         const matchIndustry = !ind || row.industry === ind;
         const text = `${row.company} ${row.industry} ${row.address}`.toLowerCase();
-        const matchSearch = !q || text.includes(q);
-        return matchIndustry && matchSearch;
+        return matchIndustry && (!q || text.includes(q));
       });
-      render(currentRows);
+      hidePopup(); render(currentRows);
     }
+
+    function showPopup(row, pixel) {
+      popup.innerHTML = `<div class="title">${esc(row.company)}</div><div class="line"><span class="label">업종</span>${esc(row.industry || '-')}</div><div class="line"><span class="label">주소</span>${esc(row.address || '-')}</div>`;
+      const x = Math.min(pixel[0] + 16, window.innerWidth - 360);
+      const y = Math.max(10, pixel[1] + 16);
+      popup.style.left = x + 'px'; popup.style.top = y + 'px'; popup.style.display = 'block';
+    }
+    function hidePopup() { popup.style.display = 'none'; if (hoveredFeature) { hoveredFeature.setStyle(null); hoveredFeature = null; } }
+
+    map.on('pointermove', function(evt) {
+      if (hoveredFeature) { hoveredFeature.setStyle(null); hoveredFeature = null; }
+      const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+      if (feature) {
+        hoveredFeature = feature; feature.setStyle(hoverStyle); map.getTargetElement().style.cursor = 'pointer';
+        showPopup(feature.getProperties(), evt.pixel);
+      } else { map.getTargetElement().style.cursor = ''; hidePopup(); }
+    });
+    map.on('click', function(evt) {
+      const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+      if (feature) showPopup(feature.getProperties(), evt.pixel);
+    });
 
     buildIndustryFilter();
     searchInput.addEventListener('input', applyFilters);
     industryFilter.addEventListener('change', applyFilters);
     render(companyData);
-
-    function refreshMapSize() {
-      map.invalidateSize(true);
-      if (currentRows.length) {
-        const bounds = currentRows.map(r => [r.lat, r.lng]);
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
-      }
-    }
-    setTimeout(refreshMapSize, 100);
-    setTimeout(refreshMapSize, 500);
-    window.addEventListener('load', refreshMapSize);
-    window.addEventListener('resize', refreshMapSize);
+    window.addEventListener('resize', () => { setTimeout(() => { map.updateSize(); fitRows(currentRows); }, 100); });
+    setTimeout(() => { map.updateSize(); fitRows(currentRows); }, 500);
   </script>
 </body>
 </html>
